@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    @apply bg-slate-950 text-slate-100 antialiased font-sans;
+    min-height: 100vh;
+  }
+}
+
+/* Custom glow and curved screen perspective */
+.screen-curve {
+  border-top: 4px solid #38bdf8;
+  border-radius: 50% 50% 0 0 / 20px 20px 0 0;
+  box-shadow: 0 -12px 25px -4px rgba(56, 189, 248, 0.35);
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(245, 158, 11, 0);
+  }
+}
+
+.seat-holding-pulse {
+  animation: pulse-glow 2s infinite;
+}

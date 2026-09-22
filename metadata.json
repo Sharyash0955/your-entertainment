@@ -1,0 +1,6 @@
+{
+  "name": "Seat Booking Platform",
+  "description": "Real-time seat booking platform with atomic concurrency locking, simulated payments, live Socket.IO sync, and AI seat finder.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
