@@ -1,6 +1,21 @@
-# Real-Time Seat Booking Platform (District / BookMyShow Architecture)
+# 🎟️ CinePulse / District — Real-Time Seat Booking Engine
+<div align="center">
 
-A production-grade seat booking platform built for placement evaluation, demonstrating **race-condition-safe concurrency control**, **atomic transactional updates**, **live Socket.IO synchronization**, **simulated payments**, and an **AI-powered Smart Seat Finder**.
+![CI Concurrency Verification](https://github.com/Sharyash0955/your-entertainment/actions/workflows/ci.yml/badge.svg)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![React](https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-07405E?style=for-the-badge&logo=sqlite&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+
+### **Languages & Core Technologies**
+[![My Skills](https://skillicons.dev/icons?i=ts,react,nodejs,express,tailwind,py,docker,sqlite,bash,html,css)](https://skillicons.dev)
+
+*A production-grade cinema & live event ticketing system with race-condition-safe atomic database locking, real-time Socket.IO synchronization, and Gemini AI seat recommendations.*
+
+</div>
 
 ---
 
@@ -82,14 +97,32 @@ Every seat has strictly one status at any instant:
 
 ## 4. How to Run the Concurrency Load Test
 
-### Terminal / CLI Load Test
-To fire 50 concurrent hold requests simultaneously at the same seat:
-
+### Option A: TypeScript Concurrency Runner
 ```bash
 npm run test:concurrency
 ```
 
-### Expected Output:
+### Option B: Python ThreadPool Concurrency Runner
+```bash
+# Using npm script:
+npm run test:concurrency:py
+
+# Or directly using Python:
+python3 scripts/test-concurrency.py
+```
+
+### Option C: Instant Zero-Config Setup
+```bash
+./setup.sh
+```
+
+### Option D: Docker Container Build & Run
+```bash
+docker build -t cinepulse-seat-booking .
+docker run -p 3000:3000 cinepulse-seat-booking
+```
+
+### Expected Test Output:
 ```
 ======================================================================
 ⚡ STARTING 50 CONCURRENT SEAT HOLD RACE CONDITION TEST
