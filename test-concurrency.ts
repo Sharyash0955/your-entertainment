@@ -35,7 +35,7 @@ async function runConcurrencyTest() {
     await fetch(`${BASE_URL}/api/seats/${TARGET_SEAT_ID}/release`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: 'setup_cleanup' }),
+      body: JSON.stringify({}),
     });
   } catch (_) {
     // Ignore if not previously held
