@@ -36,7 +36,8 @@ export interface AISuggestionResult {
  */
 export async function suggestSeatsWithAI(
   userPrompt: string,
-  availableSeats: SeatItem[]
+  availableSeats: SeatItem[],
+  eventCategory: string = 'movie'
 ): Promise<AISuggestionResult> {
   if (availableSeats.length === 0) {
     return {
@@ -47,6 +48,7 @@ export async function suggestSeatsWithAI(
   }
 
   const ai = getGeminiClient();
+  const isCinema = eventCategory === 'movie';
 
   if (ai) {
     try {
@@ -55,13 +57,28 @@ export async function suggestSeatsWithAI(
         row: s.row,
         number: s.number,
         tier: s.tier,
-        price: s.price,
+        price: `₹${s.price}`,
       }));
 
-      const systemInstruction = `You are a cinema & live entertainment seat recommendation specialist for a ticketing platform like BookMyShow or District.
+      const systemInstruction = `You are a cinema & live entertainment seat recommendation specialist for an Indian ticketing platform like BookMyShow or District.
 Analyze the user's natural language request and select the best matching available seat IDs from the provided list.
-- Rows are ordered: Row A & B are VIP / front, C, D, E are PREMIUM / middle, F, G, H are EXECUTIVE / rear.
-- Numbers run 1 to 10.
+- All prices are in Indian Rupees (₹ INR).
+${
+  isCinema
+    ? `- Indian Cinema Seating Rules:
+  * The movie screen is located at the FRONT.
+  * Front rows (A, B, C) are EXECUTIVE TIER (closest to the screen, lowest price).
+  * Middle rows (D, E) are PREMIUM TIER (acoustic and visual sweet spot).
+  * The LAST / REAR rows (F, G, H) are the VIP TIER (Luxury Recliners / Royal Class, best viewing distance in Indian cinemas, highest price).
+  * When a user asks for VIP seats or recliners, recommend seats in the LAST / REAR rows (Rows F, G, H).`
+    : `- Live Concert & Arena Rules:
+  * The artist stage / fan pit is located at the FRONT.
+  * Front rows (A, B) are the VIP TIER (Fan Pit / Golden Circle / Front Stage Access, highest price).
+  * Middle rows (C, D, E) are PREMIUM TIER (Center Arena).
+  * Rear rows (F, G, H) are EXECUTIVE TIER (General Admission / Balcony).
+  * When a user asks for VIP seats for a concert, recommend seats in the FRONT rows (Rows A, B).`
+}
+- Numbers run 1 to 10 from left to right.
 - Aisle seats are 1, 5, 6, 10.
 - Center seats are 4, 5, 6, 7.
 - If the user asks for N seats "together" or "adjacent", prioritize contiguous seats in the same row.
@@ -112,7 +129,7 @@ Analyze the user's natural language request and select the best matching availab
   }
 
   // Graceful heuristic fallback if Gemini is unavailable or errors
-  return fallbackRuleBasedSeatSuggestion(userPrompt, availableSeats);
+  return fallbackRuleBasedSeatSuggestion(userPrompt, availableSeats, eventCategory);
 }
 
 /**
@@ -120,9 +137,11 @@ Analyze the user's natural language request and select the best matching availab
  */
 export function fallbackRuleBasedSeatSuggestion(
   userPrompt: string,
-  availableSeats: SeatItem[]
+  availableSeats: SeatItem[],
+  eventCategory: string = 'movie'
 ): AISuggestionResult {
   const promptLower = userPrompt.toLowerCase();
+  const isCinema = eventCategory === 'movie';
 
   // Extract count (e.g. "4 seats", "2 together", "for one", "3")
   let count = 2; // default 2
@@ -141,10 +160,10 @@ export function fallbackRuleBasedSeatSuggestion(
     }
   }
 
-  const wantsFront = promptLower.includes('front') || promptLower.includes('vip');
-  const wantsBack = promptLower.includes('back') || promptLower.includes('rear') || promptLower.includes('executive');
-  const wantsAisle = promptLower.includes('aisle') || promptLower.includes('edge') || promptLower.includes('corner');
-  const wantsCenter = promptLower.includes('center') || promptLower.includes('middle') || promptLower.includes('premium');
+  const wantsVip = promptLower.includes('vip') || promptLower.includes('recliner') || promptLower.includes('luxury') || promptLower.includes('platinum');
+  const wantsFront = promptLower.includes('front') || promptLower.includes('close') || promptLower.includes('screen');
+  const wantsBack = promptLower.includes('back') || promptLower.includes('rear') || promptLower.includes('last');
+  const wantsExecutive = promptLower.includes('executive') || promptLower.includes('budget') || promptLower.includes('cheap');
 
   // Group available seats by row
   const rowMap: Record<string, SeatItem[]> = {};
@@ -153,10 +172,28 @@ export function fallbackRuleBasedSeatSuggestion(
     rowMap[s.row].push(s);
   }
 
-  // Row preferences
-  let preferredRows = ['C', 'D', 'E', 'B', 'A', 'F', 'G', 'H'];
-  if (wantsFront) preferredRows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-  else if (wantsBack) preferredRows = ['H', 'G', 'F', 'E', 'D', 'C', 'B', 'A'];
+  // Row preferences depending on cinema vs concert
+  let preferredRows: string[] = [];
+  if (isCinema) {
+    // In India, cinema VIP tier is at the last rows (H, G, F), Executive is in front (A, B, C)
+    if (wantsVip || wantsBack) {
+      preferredRows = ['H', 'G', 'F', 'E', 'D', 'C', 'B', 'A'];
+    } else if (wantsFront || wantsExecutive) {
+      preferredRows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+    } else {
+      // Best visual sweet-spot: middle to back
+      preferredRows = ['E', 'D', 'F', 'G', 'H', 'C', 'B', 'A'];
+    }
+  } else {
+    // In Concerts / Live events: VIP is in the front (A, B) near the stage!
+    if (wantsVip || wantsFront) {
+      preferredRows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+    } else if (wantsBack || wantsExecutive) {
+      preferredRows = ['H', 'G', 'F', 'E', 'D', 'C', 'B', 'A'];
+    } else {
+      preferredRows = ['C', 'D', 'E', 'B', 'A', 'F', 'G', 'H'];
+    }
+  }
 
   // Try to find contiguous seats in the preferred row
   for (const rowLetter of preferredRows) {

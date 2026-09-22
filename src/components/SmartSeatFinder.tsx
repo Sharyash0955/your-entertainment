@@ -9,6 +9,7 @@ interface SmartSeatFinderProps {
   onClearSuggestion: () => void;
   onHoldSuggested: (seatIds: string[]) => void;
   isHoldingMultiple: boolean;
+  category?: string;
 }
 
 export const SmartSeatFinder: React.FC<SmartSeatFinderProps> = ({
@@ -18,15 +19,24 @@ export const SmartSeatFinder: React.FC<SmartSeatFinderProps> = ({
   onClearSuggestion,
   onHoldSuggested,
   isHoldingMultiple,
+  category = 'movie',
 }) => {
   const [prompt, setPrompt] = useState('');
 
-  const quickChips = [
-    '2 seats together near the front',
-    'Aisle seat for one',
-    '4 contiguous seats in middle',
-    'Best 2 VIP seats',
-  ];
+  const isCinema = category === 'movie';
+  const quickChips = isCinema
+    ? [
+        'Best 2 VIP Recliners (Back Row)',
+        '2 contiguous seats in sweet spot',
+        'Aisle seat for one',
+        'Budget executive seats',
+      ]
+    : [
+        'Best 2 VIP Fan Pit seats (Front Row)',
+        '4 contiguous seats in Center Arena',
+        'Aisle seat for one',
+        'General admission seats',
+      ];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

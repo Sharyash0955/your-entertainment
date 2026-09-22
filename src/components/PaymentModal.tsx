@@ -248,7 +248,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 </div>
                 <div className="flex justify-between items-center text-slate-300">
                   <span>Ticket Price</span>
-                  <span className="font-bold text-emerald-400">${seat.price}</span>
+                  <span className="font-bold text-emerald-400">₹{seat.price}</span>
                 </div>
                 <div className="flex justify-between items-center text-slate-400 text-[11px] pt-1 border-t border-slate-850">
                   <span>Holder ID</span>

@@ -8,6 +8,7 @@ interface SeatMapProps {
   onSeatClick: (seat: SeatItem) => void;
   suggestedSeatIds: string[];
   isHoldingLoadingId: string | null;
+  category?: 'movie' | 'concert' | 'comedy' | 'sports';
 }
 
 export const SeatMap: React.FC<SeatMapProps> = ({
@@ -16,6 +17,7 @@ export const SeatMap: React.FC<SeatMapProps> = ({
   onSeatClick,
   suggestedSeatIds,
   isHoldingLoadingId,
+  category = 'movie',
 }) => {
   // Group seats by row
   const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
@@ -24,40 +26,109 @@ export const SeatMap: React.FC<SeatMapProps> = ({
     seatsByRow[r] = seats.filter((s) => s.row === r).sort((a, b) => a.number - b.number);
   });
 
+  const isCinema = category === 'movie';
+
+  // Compute live prices from the current event's seats
+  const vipSeat = seats.find((s) => s.tier === 'VIP');
+  const premiumSeat = seats.find((s) => s.tier === 'PREMIUM');
+  const execSeat = seats.find((s) => s.tier === 'EXECUTIVE');
+
+  const vipPrice = vipSeat ? `₹${vipSeat.price}` : '₹650';
+  const premiumPrice = premiumSeat ? `₹${premiumSeat.price}` : '₹500';
+  const execPrice = execSeat ? `₹${execSeat.price}` : '₹350';
+
   const getTierLabel = (row: string) => {
-    if (row === 'A' || row === 'B') return { name: 'VIP TIER', price: '$650', color: 'text-amber-400 border-amber-500/30 bg-amber-500/10' };
-    if (row === 'C' || row === 'D' || row === 'E') return { name: 'PREMIUM TIER', price: '$500', color: 'text-sky-400 border-sky-500/30 bg-sky-500/10' };
-    return { name: 'EXECUTIVE TIER', price: '$350', color: 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' };
+    if (isCinema) {
+      // In Indian Cinema: Front rows near screen are Executive (budget/standard);
+      // Middle rows are Premium; Last/Rear rows are VIP Recliners/Platinum
+      if (row === 'A' || row === 'B' || row === 'C') {
+        return {
+          name: 'EXECUTIVE TIER (FRONT ROWS • SCREEN SIGHTLINE)',
+          price: execPrice,
+          color: 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10',
+        };
+      }
+      if (row === 'D' || row === 'E') {
+        return {
+          name: 'PREMIUM TIER (MIDDLE ROWS • SWEET SPOT)',
+          price: premiumPrice,
+          color: 'text-sky-400 border-sky-500/30 bg-sky-500/10',
+        };
+      }
+      return {
+        name: 'VIP RECLINER TIER (LAST ROWS • LUXURY SEATING)',
+        price: vipPrice,
+        color: 'text-amber-400 border-amber-500/30 bg-amber-500/10',
+      };
+    } else {
+      // In Concerts / Live shows: Front rows are VIP (Fan Pit / Front of Stage);
+      // Middle rows are Premium; Rear/Balcony rows are Executive
+      if (row === 'A' || row === 'B') {
+        return {
+          name: 'VIP FAN PIT (FRONT ROW • STAGE ACCESS)',
+          price: vipPrice,
+          color: 'text-amber-400 border-amber-500/30 bg-amber-500/10',
+        };
+      }
+      if (row === 'C' || row === 'D' || row === 'E') {
+        return {
+          name: 'PREMIUM TIER (CENTER ARENA)',
+          price: premiumPrice,
+          color: 'text-sky-400 border-sky-500/30 bg-sky-500/10',
+        };
+      }
+      return {
+        name: 'EXECUTIVE / GENERAL ADMISSION (REAR)',
+        price: execPrice,
+        color: 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10',
+      };
+    }
   };
 
   return (
     <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 sm:p-8 shadow-2xl relative">
-      {/* Curved Screen Perspective */}
-      <div className="max-w-2xl mx-auto mb-10 text-center">
-        <div className="screen-curve h-4 w-full mb-3" />
-        <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-400 flex items-center justify-center gap-2">
-          <span>Cinema Screen Direction</span>
-        </p>
-      </div>
+      {/* Curved Screen Perspective for Cinema OR Stage Area for Concerts */}
+      {isCinema ? (
+        <div className="max-w-2xl mx-auto mb-10 text-center">
+          <div className="screen-curve h-4 w-full mb-3" />
+          <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-300 flex items-center justify-center gap-2">
+            <span>Cinema Screen Direction (All eyes this way)</span>
+          </p>
+          <p className="text-[10px] text-slate-400 mt-1">
+            Indian Cinema Layout: Executive at Front • VIP Recliners at the Back
+          </p>
+        </div>
+      ) : (
+        <div className="max-w-2xl mx-auto mb-10 text-center">
+          <div className="h-4 w-full mb-3 rounded-t-xl bg-gradient-to-r from-amber-500/20 via-rose-500/40 to-amber-500/20 border-t-2 border-rose-500" />
+          <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-amber-300 flex items-center justify-center gap-2">
+            <span>Stage & Artist Performance Area (Fan Pit Front)</span>
+          </p>
+          <p className="text-[10px] text-slate-400 mt-1">
+            Concert Layout: VIP Fan Pit at the Front • Executive at the Rear
+          </p>
+        </div>
+      )}
 
       {/* Seat Grid Layout */}
       <div className="overflow-x-auto pb-4">
         <div className="min-w-[620px] max-w-3xl mx-auto space-y-4">
-          {rows.map((rowLetter, index) => {
+          {rows.map((rowLetter) => {
             const rowSeats = seatsByRow[rowLetter] || [];
             const tierInfo = getTierLabel(rowLetter);
-            const isFirstOfTier =
-              rowLetter === 'A' || rowLetter === 'C' || rowLetter === 'F';
+            const isFirstOfTier = isCinema
+              ? rowLetter === 'A' || rowLetter === 'D' || rowLetter === 'F'
+              : rowLetter === 'A' || rowLetter === 'C' || rowLetter === 'F';
 
             return (
               <div key={rowLetter} className="space-y-1.5">
                 {/* Tier header divider when tier changes */}
                 {isFirstOfTier && (
-                  <div className="flex items-center justify-between text-xs font-semibold py-1 px-2 border-b border-slate-850 mt-4 mb-2">
-                    <span className={`px-2 py-0.5 rounded text-[11px] border ${tierInfo.color}`}>
+                  <div className="flex items-center justify-between text-xs font-semibold py-1.5 px-3 rounded-lg bg-slate-950/60 border border-slate-800/80 mt-4 mb-2">
+                    <span className={`px-2.5 py-0.5 rounded text-[11px] font-bold border ${tierInfo.color}`}>
                       {tierInfo.name}
                     </span>
-                    <span className="text-slate-400 text-xs font-mono">{tierInfo.price} / ticket</span>
+                    <span className="text-emerald-400 text-xs font-bold font-mono">{tierInfo.price} / ticket</span>
                   </div>
                 )}
 
@@ -166,7 +237,7 @@ export const SeatMap: React.FC<SeatMapProps> = ({
         onClick={() => onSeatClick(seat)}
         disabled={isBooked || (isHold && !isHeldByMe) || isLoading}
         className={seatClasses}
-        title={`Seat ${seat.row}${seat.number} (${seat.tier}) - $${seat.price} | Status: ${seat.status}${isHold ? (isHeldByMe ? ' (Held by You)' : ' (Held by another user)') : ''}`}
+        title={`Seat ${seat.row}${seat.number} (${seat.tier}) - ₹${seat.price} | Status: ${seat.status}${isHold ? (isHeldByMe ? ' (Held by You)' : ' (Held by another user)') : ''}`}
       >
         {isLoading ? (
           <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />

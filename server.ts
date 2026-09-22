@@ -409,9 +409,14 @@ app.post('/api/ai/suggest', async (req, res) => {
   }
 
   const targetEventId = eventId || 'evt_interstellar_imax';
+  const targetEvent = getEventById(targetEventId);
   const availableSeats = getAvailableSeats(targetEventId);
 
-  const suggestion = await suggestSeatsWithAI(prompt, availableSeats);
+  const suggestion = await suggestSeatsWithAI(
+    prompt,
+    availableSeats,
+    targetEvent?.category || 'movie'
+  );
   res.json(suggestion);
 });
 

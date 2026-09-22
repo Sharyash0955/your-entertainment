@@ -315,28 +315,47 @@ function seedInitialData() {
     );
 
     // Generate 8 rows (A to H) of 10 seats each = 80 seats for this event
-    const rows = [
-      { row: 'A', tier: 'VIP', price: event.basePrice + 200 },
-      { row: 'B', tier: 'VIP', price: event.basePrice + 200 },
-      { row: 'C', tier: 'PREMIUM', price: event.basePrice + 80 },
-      { row: 'D', tier: 'PREMIUM', price: event.basePrice + 80 },
-      { row: 'E', tier: 'PREMIUM', price: event.basePrice + 80 },
-      { row: 'F', tier: 'EXECUTIVE', price: event.basePrice },
-      { row: 'G', tier: 'EXECUTIVE', price: event.basePrice },
-      { row: 'H', tier: 'EXECUTIVE', price: event.basePrice },
-    ];
+    // In India:
+    // For Cinema ('movie'): Screen is in front. Rows closest to screen (A, B, C) are Executive tier (lowest price).
+    // Middle rows (D, E) are Premium tier.
+    // The last/rear rows (F, G, H) are VIP Recliners (highest price).
+    // For Concerts ('concert') and live events: The VIP Fan Pit is at the FRONT (A, B) closest to the stage!
+    // Middle rows (C, D, E) are Premium, and rear rows (F, G, H) are Executive / General Admission.
+    const isCinema = event.category === 'movie';
+    const rows = isCinema
+      ? [
+          { row: 'A', tier: 'EXECUTIVE', price: event.basePrice },
+          { row: 'B', tier: 'EXECUTIVE', price: event.basePrice },
+          { row: 'C', tier: 'EXECUTIVE', price: event.basePrice },
+          { row: 'D', tier: 'PREMIUM', price: event.basePrice + 100 },
+          { row: 'E', tier: 'PREMIUM', price: event.basePrice + 100 },
+          { row: 'F', tier: 'VIP', price: event.basePrice + 250 },
+          { row: 'G', tier: 'VIP', price: event.basePrice + 250 },
+          { row: 'H', tier: 'VIP', price: event.basePrice + 250 },
+        ]
+      : [
+          { row: 'A', tier: 'VIP', price: event.basePrice + 250 },
+          { row: 'B', tier: 'VIP', price: event.basePrice + 250 },
+          { row: 'C', tier: 'PREMIUM', price: event.basePrice + 100 },
+          { row: 'D', tier: 'PREMIUM', price: event.basePrice + 100 },
+          { row: 'E', tier: 'PREMIUM', price: event.basePrice + 100 },
+          { row: 'F', tier: 'EXECUTIVE', price: event.basePrice },
+          { row: 'G', tier: 'EXECUTIVE', price: event.basePrice },
+          { row: 'H', tier: 'EXECUTIVE', price: event.basePrice },
+        ];
 
     for (const r of rows) {
       for (let num = 1; num <= 10; num++) {
         const seatId = `${event.id}_${r.row}${num}`;
 
         // Seed a few pre-booked seats to show realistic hall occupancy
-        const isPreBooked = (r.row === 'C' && (num === 4 || num === 5)) || (r.row === 'A' && num === 7);
+        const isPreBooked = (r.row === 'D' && (num === 4 || num === 5)) || (r.row === 'B' && num === 7);
         const status = isPreBooked ? 'booked' : 'available';
 
         db.run(
-          `INSERT OR IGNORE INTO seats (id, event_id, row, number, tier, price, status, held_by, hold_expires_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, NULL, NULL)`,
+          `INSERT INTO seats (id, event_id, row, number, tier, price, status, held_by, hold_expires_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, NULL, NULL)
+           ON CONFLICT(id) DO UPDATE SET tier = excluded.tier, price = excluded.price`,
           [seatId, event.id, r.row, num, r.tier, r.price, status]
         );
 

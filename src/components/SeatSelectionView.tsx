@@ -164,6 +164,7 @@ export const SeatSelectionView: React.FC<SeatSelectionViewProps> = ({
         }}
         onHoldSuggested={handleHoldMultipleSuggested}
         isHoldingMultiple={isHoldingMultiple}
+        category={event.category}
       />
 
       {/* Real-time Seat Map */}
@@ -173,6 +174,7 @@ export const SeatSelectionView: React.FC<SeatSelectionViewProps> = ({
         onSeatClick={onSeatClick}
         suggestedSeatIds={suggestedSeatIds}
         isHoldingLoadingId={isHoldingLoadingId}
+        category={event.category}
       />
 
       {/* Sticky Bottom Action Bar */}
